@@ -35,7 +35,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 </head>
 <body class="text-slate-800 dark:text-slate-100">
 
-<div id="authLayer" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/95 p-4">
+<div id="authLayer" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/95 p-4">
  <div class="w-full max-w-md rounded-3xl bg-white p-6 sm:p-8 shadow-2xl">
   <div class="flex items-center gap-3 mb-6">
    <div class="w-12 h-12 rounded-2xl bg-slate-900 text-orange-400 flex items-center justify-center text-xl font-black">M</div>
@@ -63,7 +63,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
    <p class="text-sm text-center text-slate-600 mt-4">आधीपासून Account आहे? <button id="showLoginBtn" class="text-orange-700 font-bold">Login करा</button></p>
   </div>
   <p id="authError" class="hidden mt-4 rounded-xl bg-red-50 text-red-700 p-3 text-xs break-words"></p>
-  <p class="text-[11px] text-slate-400 text-center mt-5">Guest Login उपलब्ध नाही. तुमचे खाते सुरक्षित ठेवा.</p>
+  <button id="guestContinueBtn" type="button" class="w-full mt-4 rounded-xl bg-slate-100 text-slate-700 py-3 font-bold hover:bg-slate-200">आत्ता नको — Guest म्हणून पुढे जा</button><p class="text-[11px] text-slate-400 text-center mt-3">अभ्यासासाठी Login आवश्यक नाही. Chat साठी Login करा.</p>
  </div>
 </div>
 
@@ -77,7 +77,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
   <div class="hidden md:block text-right"><div id="clock" class="font-bold text-lg tabular-nums">--:--:--</div><div id="date" class="text-xs text-slate-500"></div></div>
   <div class="flex items-center gap-2">
    <a href="https://www.instagram.com/majhi_mpsc?obrf=MThwNGo3YnJrMW5yOA==" target="_blank" rel="noopener noreferrer" aria-label="Instagram @majhi_mpsc" title="Instagram @majhi_mpsc" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-fuchsia-600 via-pink-600 to-orange-500 text-white text-sm font-bold shadow-sm hover:opacity-90"><svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8" fill="currentColor" stroke="none"/></svg><span class="hidden sm:inline">Instagram</span></a>
-   <button id="logoutBtn" class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800" title="Logout">Logout</button>
+   <button id="loginOpenBtn" class="px-3 py-2 rounded-xl bg-orange-600 text-white text-xs font-bold">Login</button><button id="logoutBtn" class="hidden px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800" title="Logout">Logout</button>
    <button id="themeBtn" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800" title="Theme"><i data-lucide="moon" id="themeIcon" class="w-5 h-5"></i></button>
    <button onclick="openExamModal()" class="hidden sm:flex items-center gap-2 bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 px-3 py-2.5 rounded-xl text-sm font-semibold"><i data-lucide="calendar-clock" class="w-4 h-4"></i><span>Exam date</span></button>
   </div>
@@ -172,7 +172,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
    <div class="flex flex-wrap items-center justify-between gap-3"><div><div class="text-xs font-bold tracking-widest text-orange-600">MPSC STUDY CIRCLE</div><h2 class="text-xl sm:text-2xl font-extrabold mt-1">विद्यार्थी संवाद केंद्र</h2><p class="text-sm text-slate-500 mt-1">Powered by Majhi_Mpsc • अभ्यास, चर्चा आणि सहकार्य</p></div><div id="chatStatus" class="text-xs px-3 py-2 rounded-full bg-amber-100 text-amber-800">Firebase जोडत आहे...</div></div>
    <div class="mt-4 flex flex-wrap gap-2"><button id="publicChatTab" class="px-4 py-2 rounded-xl bg-orange-600 text-white text-sm font-bold">Public Chat</button><button id="privateChatTab" class="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-bold">Private Chat</button><span id="chatIdentity" class="text-xs text-slate-500 self-center ml-auto"></span></div>
   </div>
-  <div id="publicChatPanel" class="card p-4 sm:p-5"><div class="flex justify-between items-center mb-3"><div><h3 class="font-bold">🌐 सर्व विद्यार्थ्यांसाठी चर्चा</h3><p class="text-xs text-slate-500">सभ्य भाषा वापरा आणि अभ्यासाशी संबंधित चर्चा करा.</p></div><span class="text-xs text-emerald-600 font-semibold">Live</span></div><div id="publicMessages" class="h-[360px] overflow-y-auto space-y-3 rounded-xl bg-slate-50 dark:bg-slate-900 p-3"><p class="text-sm text-slate-500 text-center py-8">संदेश लोड होत आहेत...</p></div><form id="publicMessageForm" class="flex gap-2 mt-3"><input id="publicMessageInput" maxlength="1500" autocomplete="off" placeholder="तुमचा संदेश लिहा..." class="min-w-0 flex-1 p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-transparent text-sm"><button class="px-5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-sm font-bold">पाठवा</button></form></div>
+  <div id="publicChatPanel" class="card p-4 sm:p-5"><div class="flex justify-between items-center mb-3"><div><h3 class="font-bold">🌐 सर्व विद्यार्थ्यांसाठी चर्चा</h3><p class="text-xs text-slate-500">सभ्य भाषा वापरा आणि अभ्यासाशी संबंधित चर्चा करा.</p></div><span class="text-xs text-emerald-600 font-semibold">Live</span></div><div id="publicMessages" class="h-[360px] overflow-y-auto space-y-3 rounded-xl bg-slate-50 dark:bg-slate-900 p-3"><p class="text-sm text-slate-500 text-center py-8">संदेश लोड होत आहेत...</p></div><div id="guestChatNotice" class="mt-3 rounded-xl bg-orange-50 dark:bg-orange-950/30 p-3 text-sm text-orange-800 dark:text-orange-200">सार्वजनिक चर्चा वाचण्यासाठी Login लागत नाही. संदेश पाठवण्यासाठी <button type="button" onclick="openLogin()" class="font-extrabold underline">Login करा</button>.</div><form id="publicMessageForm" class="hidden flex gap-2 mt-3"><input id="publicMessageInput" maxlength="1500" autocomplete="off" placeholder="तुमचा संदेश लिहा..." class="min-w-0 flex-1 p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-transparent text-sm"><button class="px-5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-sm font-bold">पाठवा</button></form></div>
   <div id="privateChatPanel" class="hidden grid md:grid-cols-[.75fr_1.25fr] gap-4"><div class="card p-4"><h3 class="font-bold mb-1">👥 विद्यार्थी</h3><p class="text-xs text-slate-500 mb-3">खाजगी संदेशासाठी विद्यार्थी निवडा.</p><input id="userSearch" placeholder="नाव शोधा..." class="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-transparent text-sm mb-3"><div id="chatUsers" class="space-y-2 max-h-[420px] overflow-y-auto"><p class="text-xs text-slate-500">विद्यार्थी लोड होत आहेत...</p></div></div><div class="card p-4"><div class="font-bold mb-3" id="privateChatTitle">Private Chat निवडा</div><div id="privateMessages" class="h-[330px] overflow-y-auto space-y-3 rounded-xl bg-slate-50 dark:bg-slate-900 p-3"><p class="text-sm text-slate-500 text-center py-8">डावीकडून विद्यार्थी निवडा.</p></div><form id="privateMessageForm" class="flex gap-2 mt-3"><input id="privateMessageInput" maxlength="1500" autocomplete="off" disabled placeholder="खाजगी संदेश..." class="min-w-0 flex-1 p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-transparent text-sm"><button id="privateSendBtn" disabled class="px-4 rounded-xl bg-orange-600 text-white text-sm font-bold disabled:opacity-40">पाठवा</button></form></div></div>
   <div class="text-xs text-slate-500 px-1">टीप: Chat वापरण्यासाठी इंटरनेट आवश्यक आहे. हा प्रारंभिक टप्पा मजकूर संदेशांसाठी आहे; फोटो/PDF, रिपोर्ट आणि Admin moderation पुढील टप्प्यात जोडता येतील.</div>
  </section>
@@ -188,7 +188,8 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
  </div>
 </div>
 <script>
-const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const $=s=>document.querySelector(s), $=s=>[...document.querySelectorAll(s)];
+window.openLogin=()=>{document.getElementById("authLayer").classList.remove("hidden")};
 const todayKey=()=>new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'});
 const read=(k,d)=>{try{return JSON.parse(localStorage.getItem('mf_'+k))??d}catch{return d}};
 const write=(k,v)=>localStorage.setItem('mf_'+k,JSON.stringify(v));
@@ -308,13 +309,13 @@ el('emailLoginForm').onsubmit=async e=>{e.preventDefault();clearAuthError();cons
 el('emailRegisterForm').onsubmit=async e=>{e.preventDefault();clearAuthError();const name=el('registerName').value.trim(),email=el('registerEmail').value.trim(),password=el('registerPassword').value;if(!name){showAuthError(new Error('तुमचे नाव लिहा.'));return}try{localStorage.setItem('mpsc_chat_name',name);const cred=await createUserWithEmailAndPassword(auth,email,password);await updateProfile(cred.user,{displayName:name})}catch(err){showAuthError(err)}};
 el('showRegisterBtn').onclick=()=>{el('loginPanel').classList.add('hidden');el('registerPanel').classList.remove('hidden');clearAuthError()};
 el('showLoginBtn').onclick=()=>{el('registerPanel').classList.add('hidden');el('loginPanel').classList.remove('hidden');clearAuthError()};
-el('logoutBtn').onclick=()=>signOut(auth);
+el('logoutBtn').onclick=()=>signOut(auth);el('loginOpenBtn').onclick=()=>authLayer.classList.remove('hidden');el('guestContinueBtn').onclick=()=>authLayer.classList.add('hidden');
 onAuthStateChanged(auth,async user=>{
- if(!user){me=null;authLayer.classList.remove('hidden');el('appShell').classList.add('hidden');return;}
+ if(!user){me=null;authLayer.classList.add('hidden');el('appShell').classList.remove('hidden');el('loginOpenBtn').classList.remove('hidden');el('logoutBtn').classList.add('hidden');el('chatStatus').textContent='Guest Mode';el('chatIdentity').textContent='Guest विद्यार्थी';el('guestChatNotice').classList.remove('hidden');el('publicMessageForm').classList.add('hidden');el('publicMessages').innerHTML='<p class="text-sm text-slate-500 text-center py-8">सार्वजनिक संदेश पाहण्यासाठी Firebase Rules मध्ये publicMessages read access चालू करा.</p>';try{subscribePublic()}catch(e){console.warn(e)}if(stopUsers){stopUsers();stopUsers=null}if(stopPublic){stopPublic();stopPublic=null}return;}
  me=user;myName=(user.displayName||localStorage.getItem('mpsc_chat_name')||user.email?.split('@')[0]||'MPSC विद्यार्थी').trim().slice(0,40);
  localStorage.setItem('mpsc_chat_name',myName);
  try{await setDoc(doc(db,'chatUsers',me.uid),{uid:me.uid,name:myName,lastSeen:serverTimestamp()},{merge:true});
- el('chatIdentity').textContent='तुम्ही: '+myName;el('chatStatus').textContent='● Connected';el('chatStatus').className='text-xs px-3 py-2 rounded-full bg-emerald-100 text-emerald-800';
+ el('loginOpenBtn').classList.add('hidden');el('logoutBtn').classList.remove('hidden');el('guestChatNotice').classList.add('hidden');el('publicMessageForm').classList.remove('hidden');el('chatIdentity').textContent='तुम्ही: '+myName;el('chatStatus').textContent='● Connected';el('chatStatus').className='text-xs px-3 py-2 rounded-full bg-emerald-100 text-emerald-800';
  authLayer.classList.add('hidden');el('appShell').classList.remove('hidden');subscribePublic();
  if(stopUsers)stopUsers();stopUsers=onSnapshot(query(collection(db,'chatUsers'),orderBy('lastSeen','desc'),limit(80)),s=>{knownUsers=s.docs.map(d=>d.data());drawUsers()});
  }catch(err){showAuthError(err);console.error(err)}
