@@ -189,7 +189,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
  </div>
 </div>
 <script>
-const $=s=>document.querySelector(s), $=s=>[...document.querySelectorAll(s)];
+const $=s=>document.querySelector(s) , $=s=>[...document.querySelectorAll(s)];
 window.openLogin=()=>{document.getElementById("authLayer").classList.remove("hidden")};
 const todayKey=()=>new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'});
 const read=(k,d)=>{try{return JSON.parse(localStorage.getItem('mf_'+k))??d}catch{return d}};
