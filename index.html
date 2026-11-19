@@ -333,12 +333,13 @@ onAuthStateChanged(auth,async user=>{
 
 
 <script type="module">
-import { initializeApp as initAdminApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+import { getApp as getAdminApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import { getAuth as getAdminAuth, onAuthStateChanged as onAdminAuth } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import { getFirestore as getAdminDb, collection as adminCollection, addDoc as adminAddDoc, getDocs as adminGetDocs, query as adminQuery, orderBy as adminOrderBy, limit as adminLimit, serverTimestamp as adminTimestamp, doc as adminDoc, setDoc as adminSetDoc } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 const ADMIN_EMAIL='pramodraj9734@gmail.com';
 const cfg={apiKey:'AIzaSyAjuHs17AWgGB523rHiZhrwBgZ3H0pY0r0',authDomain:'mpsc-study-circle.firebaseapp.com',projectId:'mpsc-study-circle',storageBucket:'mpsc-study-circle.firebasestorage.app',messagingSenderId:'790349973942',appId:'1:790349973942:web:d9fba09fbba2ef5eac9917'};
-const adminApp=initAdminApp(cfg,'adminAnalytics'),adminAuth=getAdminAuth(adminApp),adminDb=getAdminDb(adminApp);
+// Reuse the same default Firebase app/auth session used by the main login module.
+const adminApp=getAdminApp(),adminAuth=getAdminAuth(adminApp),adminDb=getAdminDb(adminApp);
 const $a=id=>document.getElementById(id), escA=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const isAdmin=u=>!!u&&String(u.email||'').toLowerCase()===ADMIN_EMAIL;
 let adminUser=null;
