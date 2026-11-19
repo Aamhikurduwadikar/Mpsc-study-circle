@@ -50,7 +50,7 @@ service cloud.firestore {
     }
     match /chatUsers/{uid} {
       allow read: if signedIn();
-      allow create, update: if owns(uid)
+      allow create, update: if owns(uid) && canUseChat()
         && request.resource.data.uid == uid
         && request.resource.data.name is string
         && request.resource.data.name.size() <= 40;
