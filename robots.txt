@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://mpsc-study-circle-professional-preview-kurduwadi.vercel.app/sitemap.xml
