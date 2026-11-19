@@ -121,6 +121,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
   <button class="navbtn active" data-tab="dashboard"><i data-lucide="layout-dashboard" class="w-4 h-4 inline mr-1"></i>Dashboard Overview</button>
   <button class="navbtn" data-tab="syllabus"><i data-lucide="book-open-check" class="w-4 h-4 inline mr-1"></i>Syllabus &amp; PYQs</button>
   <button class="navbtn" data-tab="planner"><i data-lucide="calendar-days" class="w-4 h-4 inline mr-1"></i>Timetable Planner</button>
+  <button id="adminNavBtn" class="navbtn hidden" data-tab="admin"><i data-lucide="shield-check" class="w-4 h-4 inline mr-1"></i>Admin Dashboard</button>
   <button class="navbtn" data-tab="community"><i data-lucide="messages-square" class="w-4 h-4 inline mr-1"></i>Study Circle Chat</button>
  </nav>
 
@@ -178,6 +179,13 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
   <div class="text-xs text-slate-500 px-1">टीप: Chat वापरण्यासाठी इंटरनेट आवश्यक आहे. हा प्रारंभिक टप्पा मजकूर संदेशांसाठी आहे; फोटो/PDF, रिपोर्ट आणि Admin moderation पुढील टप्प्यात जोडता येतील.</div>
  </section>
 
+
+ <section id="admin" class="tabpanel space-y-5">
+  <div class="card p-5"><div class="flex flex-wrap items-center justify-between gap-3"><div><h2 class="text-xl font-extrabold">Admin Dashboard</h2><p class="text-sm text-slate-500">Website analytics आणि विद्यार्थी समुदायाचा आढावा</p></div><button id="adminRefreshBtn" class="rounded-xl bg-orange-600 text-white px-4 py-2 text-sm font-bold">Refresh</button></div><p id="adminStatus" class="text-sm text-slate-500 mt-3">डेटा लोड होत आहे…</p></div>
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3"><div class="card p-4"><div class="text-xs text-slate-500">Website Page Views</div><div id="admViews" class="text-2xl font-extrabold mt-2">—</div></div><div class="card p-4"><div class="text-xs text-slate-500">Registered Students</div><div id="admUsers" class="text-2xl font-extrabold mt-2">—</div></div><div class="card p-4"><div class="text-xs text-slate-500">Chat Messages</div><div id="admChats" class="text-2xl font-extrabold mt-2">—</div></div><div class="card p-4"><div class="text-xs text-slate-500">Active (last 15 min)</div><div id="admActive" class="text-2xl font-extrabold mt-2">—</div></div></div>
+  <div class="grid lg:grid-cols-2 gap-5"><div class="card p-5"><h3 class="font-bold mb-3">Popular Pages</h3><div id="admPages" class="space-y-2 text-sm text-slate-500">—</div></div><div class="card p-5"><h3 class="font-bold mb-3">Recent Login History</h3><div id="admLogins" class="space-y-2 text-sm text-slate-500">—</div></div></div>
+  <div class="card p-5"><h3 class="font-bold mb-3">Recent Students</h3><div id="admStudentList" class="space-y-2 text-sm text-slate-500">—</div></div>
+ </section>
 </main>
 </div>
 
@@ -323,5 +331,37 @@ onAuthStateChanged(auth,async user=>{
 });
 </script>
 
+
+<script type="module">
+import { initializeApp as initAdminApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+import { getAuth as getAdminAuth, onAuthStateChanged as onAdminAuth } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+import { getFirestore as getAdminDb, collection as adminCollection, addDoc as adminAddDoc, getDocs as adminGetDocs, query as adminQuery, orderBy as adminOrderBy, limit as adminLimit, serverTimestamp as adminTimestamp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+const ADMIN_EMAIL='pramodraj9734@gmail.com';
+const cfg={apiKey:'AIzaSyAjuHs17AWgGB523rHiZhrwBgZ3H0pY0r0',authDomain:'mpsc-study-circle.firebaseapp.com',projectId:'mpsc-study-circle',storageBucket:'mpsc-study-circle.firebasestorage.app',messagingSenderId:'790349973942',appId:'1:790349973942:web:d9fba09fbba2ef5eac9917'};
+const adminApp=initAdminApp(cfg,'adminAnalytics'),adminAuth=getAdminAuth(adminApp),adminDb=getAdminDb(adminApp);
+const $a=id=>document.getElementById(id), escA=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const isAdmin=u=>!!u&&String(u.email||'').toLowerCase()===ADMIN_EMAIL;
+let adminUser=null;
+// Count page views (not unique people). Anonymous create is allowed by the matching Firestore rule.
+try{await adminAddDoc(adminCollection(adminDb,'siteVisits'),{path:location.pathname,createdAt:adminTimestamp()})}catch(e){console.warn('Page-view tracking unavailable until Firestore rules are published.',e)}
+onAdminAuth(adminAuth,u=>{adminUser=u;$a('adminNavBtn').classList.toggle('hidden',!isAdmin(u));if(!isAdmin(u)&&document.getElementById('admin')?.classList.contains('active'))switchTab('dashboard')});
+async function loadAdmin(){if(!isAdmin(adminUser)){ $a('adminStatus').textContent='हा विभाग फक्त अधिकृत Admin साठी आहे.';return;}$a('adminStatus').textContent='डेटा लोड होत आहे…';try{
+ const [visits,users,chats,logins]=await Promise.all([
+  adminGetDocs(adminQuery(adminCollection(adminDb,'siteVisits'),adminOrderBy('createdAt','desc'),adminLimit(1000))),
+  adminGetDocs(adminQuery(adminCollection(adminDb,'chatUsers'),adminOrderBy('lastSeen','desc'),adminLimit(500))),
+  adminGetDocs(adminQuery(adminCollection(adminDb,'publicMessages'),adminOrderBy('createdAt','desc'),adminLimit(500))),
+  adminGetDocs(adminQuery(adminCollection(adminDb,'loginHistory'),adminOrderBy('createdAt','desc'),adminLimit(20)))
+ ]);
+ const now=Date.now(), active=users.docs.filter(d=>{const t=d.data().lastSeen?.toDate?.()?.getTime?.()||0;return now-t<15*60*1000}).length;
+ $a('admViews').textContent=visits.size;$a('admUsers').textContent=users.size;$a('admChats').textContent=chats.size;$a('admActive').textContent=active;
+ const pages={};visits.docs.forEach(d=>{const p=d.data().path||'/';pages[p]=(pages[p]||0)+1});const top=Object.entries(pages).sort((a,b)=>b[1]-a[1]).slice(0,8);
+ $a('admPages').innerHTML=top.length?top.map(([p,n])=>'<div class="flex justify-between gap-3 border-b border-slate-100 dark:border-slate-800 py-2"><span>'+escA(p)+'</span><b>'+n+'</b></div>').join(''):'अजून page views नाहीत.';
+ $a('admLogins').innerHTML=logins.size?logins.docs.map(d=>{const x=d.data();return '<div class="border-b border-slate-100 dark:border-slate-800 py-2"><b>'+escA(x.email||x.name||'विद्यार्थी')+'</b><div class="text-xs text-slate-500">'+escA(x.createdAt?.toDate?.()?.toLocaleString('mr-IN')||'वेळ उपलब्ध नाही')+'</div></div>'}).join(''):'Login history उपलब्ध नाही.';
+ $a('admStudentList').innerHTML=users.size?users.docs.slice(0,15).map(d=>{const x=d.data();return '<div class="flex justify-between gap-3 border-b border-slate-100 dark:border-slate-800 py-2"><span>'+escA(x.name||'विद्यार्थी')+'</span><span class="text-xs text-slate-500">'+escA(x.lastSeen?.toDate?.()?.toLocaleString('mr-IN')||'')+'</span></div>'}).join(''):'विद्यार्थी डेटा उपलब्ध नाही.';
+ $a('adminStatus').textContent='अद्ययावत: '+new Date().toLocaleString('mr-IN')+' • Page Views म्हणजे page loads; unique visitors नाहीत.';
+ }catch(e){console.error(e);$a('adminStatus').textContent='डेटा मिळाला नाही. Firebase Firestore Rules अपडेट/Publish करणे आवश्यक आहे: '+(e.code||e.message)}}
+$a('adminRefreshBtn').addEventListener('click',loadAdmin);
+const oldSwitch=window.switchTab;window.switchTab=function(id){if(id==='admin'&&!isAdmin(adminUser)){alert('Admin access आवश्यक आहे.');return}oldSwitch(id);if(id==='admin')loadAdmin()};
+</script>
 </body>
 </html>
