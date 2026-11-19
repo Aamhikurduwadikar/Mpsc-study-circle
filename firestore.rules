@@ -3,6 +3,9 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
     function isAdmin() { return signedIn() && request.auth.token.email == 'pramodraj9734@gmail.com'; }
+    function owns(uid) { return signedIn() && request.auth.uid == uid; }
+    function canUseChat() { return signedIn() && !exists(/databases/$(database)/documents/blockedUsers/$(request.auth.uid)); }
+
     match /siteVisits/{visitId} {
       allow create: if true;
       allow read, update, delete: if isAdmin();
@@ -11,33 +14,66 @@ service cloud.firestore {
       allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
       allow read, update, delete: if isAdmin();
     }
+    match /blockedUsers/{uid} {
+      allow read: if owns(uid) || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+    match /studentProgress/{uid} {
+      allow read: if signedIn();
+      allow create, update: if owns(uid) && canUseChat()
+        && request.resource.data.uid == uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 60;
+      allow delete: if owns(uid) || isAdmin();
+    }
+    match /studyResources/{resourceId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+    match /announcements/{announcementId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+    match /testAttempts/{attemptId} {
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid
+        && request.resource.data.score is number
+        && request.resource.data.score >= 0 && request.resource.data.score <= 20;
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+    match /messageReports/{reportId} {
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow read, update, delete: if isAdmin();
+    }
     function isParticipant(roomId) {
-      return signedIn() && request.auth.uid in get(/databases/$(database)/documents/privateRooms/$(roomId)).data.participants;
+      return canUseChat() && request.auth.uid in get(/databases/$(database)/documents/privateRooms/$(roomId)).data.participants;
     }
     match /chatUsers/{uid} {
       allow read: if signedIn();
-      allow create, update: if signedIn() && request.auth.uid == uid
+      allow create, update: if owns(uid) && canUseChat()
         && request.resource.data.uid == uid
         && request.resource.data.name is string
         && request.resource.data.name.size() <= 40;
+      allow delete: if owns(uid) || isAdmin();
     }
     match /publicMessages/{messageId} {
       allow read: if true;
-      allow create: if signedIn()
+      allow create: if canUseChat()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.name is string
         && request.resource.data.text is string
         && request.resource.data.text.size() > 0
         && request.resource.data.text.size() <= 1500;
-      allow update, delete: if signedIn() && resource.data.uid == request.auth.uid;
+      allow update: if signedIn() && resource.data.uid == request.auth.uid;
+      allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
     }
     match /privateRooms/{roomId} {
-      allow create: if signedIn()
+      allow create: if canUseChat()
         && request.resource.data.participants is list
         && request.resource.data.participants.size() == 2
         && request.auth.uid in request.resource.data.participants;
-      allow read: if signedIn() && request.auth.uid in resource.data.participants;
-      allow update: if signedIn() && request.auth.uid in resource.data.participants
+      allow read: if canUseChat() && request.auth.uid in resource.data.participants;
+      allow update: if canUseChat() && request.auth.uid in resource.data.participants
         && request.resource.data.participants == resource.data.participants;
       match /messages/{messageId} {
         allow read: if isParticipant(roomId);
