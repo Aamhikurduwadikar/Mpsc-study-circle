@@ -1,0 +1,19 @@
+{
+  "name": "MPSC Study Circle",
+  "short_name": "MPSC Circle",
+  "lang": "mr-IN",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "description": "MPSC अभ्यास, Notes, PYQ आणि Mock Tests",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
