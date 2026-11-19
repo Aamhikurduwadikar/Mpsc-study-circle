@@ -2,6 +2,15 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
+    function isAdmin() { return signedIn() && request.auth.token.email == 'pramodraj9734@gmail.com'; }
+    match /siteVisits/{visitId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+    match /loginHistory/{loginId} {
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow read, update, delete: if isAdmin();
+    }
     function isParticipant(roomId) {
       return signedIn() && request.auth.uid in get(/databases/$(database)/documents/privateRooms/$(roomId)).data.participants;
     }
