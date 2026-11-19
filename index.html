@@ -182,9 +182,9 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 
  <section id="admin" class="tabpanel space-y-5">
   <div class="card p-5"><div class="flex flex-wrap items-center justify-between gap-3"><div><h2 class="text-xl font-extrabold">Admin Dashboard</h2><p class="text-sm text-slate-500">Website analytics आणि विद्यार्थी समुदायाचा आढावा</p></div><button id="adminRefreshBtn" class="rounded-xl bg-orange-600 text-white px-4 py-2 text-sm font-bold">Refresh</button></div><p id="adminStatus" class="text-sm text-slate-500 mt-3">डेटा लोड होत आहे…</p></div>
-  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3"><div class="card p-4"><div class="text-xs text-slate-500">Website Page Views</div><div id="admViews" class="text-2xl font-extrabold mt-2">—</div></div><div class="card p-4"><div class="text-xs text-slate-500">Registered Students</div><div id="admUsers" class="text-2xl font-extrabold mt-2">—</div></div><div class="card p-4"><div class="text-xs text-slate-500">Chat Messages</div><div id="admChats" class="text-2xl font-extrabold mt-2">—</div></div><div class="card p-4"><div class="text-xs text-slate-500">Active (last 15 min)</div><div id="admActive" class="text-2xl font-extrabold mt-2">—</div></div></div>
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3"><div class="card p-4"><div class="text-xs text-slate-500">Website Page Views</div><div id="admViews" class="text-2xl font-extrabold mt-2">—</div></div><div class="card p-4"><div class="text-xs text-slate-500">Registered Students</div><div id="admUsers" class="text-2xl font-extrabold mt-2">—</div></div><div class="card p-4"><div class="text-xs text-slate-500">Chat Messages</div><div id="admChats" class="text-2xl font-extrabold mt-2">—</div></div><div class="card p-4"><div class="text-xs text-slate-500">Online Now (2 min)</div><div id="admActive" class="text-2xl font-extrabold mt-2">—</div></div><div class="card p-4"><div class="text-xs text-slate-500">आजचा एकूण वापर वेळ</div><div id="admTodayTime" class="text-2xl font-extrabold mt-2">—</div></div><div class="card p-4"><div class="text-xs text-slate-500">या महिन्याचा वापर वेळ</div><div id="admMonthTime" class="text-2xl font-extrabold mt-2">—</div></div></div>
   <div class="grid lg:grid-cols-2 gap-5"><div class="card p-5"><h3 class="font-bold mb-3">Popular Pages</h3><div id="admPages" class="space-y-2 text-sm text-slate-500">—</div></div><div class="card p-5"><h3 class="font-bold mb-3">Recent Login History</h3><div id="admLogins" class="space-y-2 text-sm text-slate-500">—</div></div></div>
-  <div class="card p-5"><h3 class="font-bold mb-3">Recent Students</h3><div id="admStudentList" class="space-y-2 text-sm text-slate-500">—</div></div>
+  <div class="card p-5"><div class="flex items-center justify-between gap-2 mb-3"><h3 class="font-bold">विद्यार्थी Activity आणि Online स्थिती</h3><span class="text-xs text-slate-500">वेळ फक्त active tab उघडा असताना मोजली जाते</span></div><div id="admStudentList" class="space-y-2 text-sm text-slate-500">—</div></div>
  </section>
 </main>
 </div>
@@ -335,7 +335,7 @@ onAuthStateChanged(auth,async user=>{
 <script type="module">
 import { getApp as getAdminApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import { getAuth as getAdminAuth, onAuthStateChanged as onAdminAuth } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
-import { getFirestore as getAdminDb, collection as adminCollection, addDoc as adminAddDoc, getDocs as adminGetDocs, query as adminQuery, orderBy as adminOrderBy, limit as adminLimit, serverTimestamp as adminTimestamp, doc as adminDoc, setDoc as adminSetDoc } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+import { getFirestore as getAdminDb, collection as adminCollection, addDoc as adminAddDoc, getDocs as adminGetDocs, getDoc as adminGetDoc, query as adminQuery, orderBy as adminOrderBy, limit as adminLimit, serverTimestamp as adminTimestamp, doc as adminDoc, setDoc as adminSetDoc } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 const ADMIN_EMAIL='pramodraj9734@gmail.com';
 const cfg={apiKey:'AIzaSyAjuHs17AWgGB523rHiZhrwBgZ3H0pY0r0',authDomain:'mpsc-study-circle.firebaseapp.com',projectId:'mpsc-study-circle',storageBucket:'mpsc-study-circle.firebasestorage.app',messagingSenderId:'790349973942',appId:'1:790349973942:web:d9fba09fbba2ef5eac9917'};
 // Reuse the same default Firebase app/auth session used by the main login module.
@@ -345,8 +345,27 @@ const isAdmin=u=>!!u&&String(u.email||'').toLowerCase()===ADMIN_EMAIL;
 let adminUser=null;
 // Count page views (not unique people). Anonymous create is allowed by the matching Firestore rule.
 try{await adminAddDoc(adminCollection(adminDb,'siteVisits'),{path:location.pathname,createdAt:adminTimestamp()})}catch(e){console.warn('Page-view tracking unavailable until Firestore rules are published.',e)}
-let heartbeatTimer=null;
-onAdminAuth(adminAuth,async u=>{adminUser=u;$a('adminNavBtn').classList.toggle('hidden',!isAdmin(u));if(!isAdmin(u)&&document.getElementById('admin')?.classList.contains('active'))switchTab('dashboard');if(heartbeatTimer)clearInterval(heartbeatTimer);if(u){try{await adminAddDoc(adminCollection(adminDb,'loginHistory'),{uid:u.uid,email:u.email||'',name:u.displayName||'',createdAt:adminTimestamp()})}catch(e){console.warn('Login history will work after Firestore rules are published.',e)}const beat=()=>adminSetDoc(adminDoc(adminDb,'chatUsers',u.uid),{uid:u.uid,name:u.displayName||u.email?.split('@')[0]||'विद्यार्थी',lastSeen:adminTimestamp()},{merge:true}).catch(()=>{});beat();heartbeatTimer=setInterval(beat,60000)}});
+let heartbeatTimer=null,activityUser=null,activityTick=0,activitySeconds=0;
+const indiaKeys=()=>{const d=new Date(),parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d),v=Object.fromEntries(parts.map(p=>[p.type,p.value]));return {day:`${v.year}-${v.month}-${v.day}`,month:`${v.year}-${v.month}`}};
+const durationLabel=n=>{n=Math.max(0,Number(n)||0);const h=Math.floor(n/3600),m=Math.floor(n%3600/60);return h?`${h} तास ${m} मिनिटे`:`${m} मिनिटे`};
+async function writePresence(u,delta=0){
+ const ref=adminDoc(adminDb,'chatUsers',u.uid),keys=indiaKeys();let dayTotal=0,monthTotal=0;
+ try{const snap=await adminGetDoc(ref);const data=snap.exists()?snap.data():{};dayTotal=data.activityDay===keys.day?(Number(data.todaySeconds)||0):0;monthTotal=data.activityMonth===keys.month?(Number(data.monthSeconds)||0):0}catch(e){console.warn('Activity totals read failed',e)}
+ dayTotal+=delta;monthTotal+=delta;
+ await adminSetDoc(ref,{uid:u.uid,name:u.displayName||u.email?.split('@')[0]||'विद्यार्थी',lastSeen:adminTimestamp(),activityDay:keys.day,activityMonth:keys.month,todaySeconds:dayTotal,monthSeconds:monthTotal,online:document.visibilityState==='visible'},{merge:true});
+}
+onAdminAuth(adminAuth,async u=>{
+ adminUser=u;$a('adminNavBtn').classList.toggle('hidden',!isAdmin(u));
+ if(!isAdmin(u)&&document.getElementById('admin')?.classList.contains('active'))switchTab('dashboard');
+ if(heartbeatTimer)clearInterval(heartbeatTimer);heartbeatTimer=null;activityUser=u;activityTick=Date.now();activitySeconds=0;
+ if(u){
+  try{await adminAddDoc(adminCollection(adminDb,'loginHistory'),{uid:u.uid,email:u.email||'',name:u.displayName||'',createdAt:adminTimestamp()})}catch(e){console.warn('Login history write failed',e)}
+  try{await writePresence(u,0)}catch(e){console.warn('Presence write failed',e)}
+  heartbeatTimer=setInterval(async()=>{if(!activityUser)return;const now=Date.now(),delta=document.visibilityState==='visible'?Math.min(90,Math.max(0,Math.floor((now-activityTick)/1000))):0;activityTick=now;activitySeconds+=delta;try{await writePresence(activityUser,delta)}catch(e){console.warn('Activity heartbeat failed',e)}},60000);
+ }
+});
+document.addEventListener('visibilitychange',()=>{activityTick=Date.now();if(activityUser&&document.visibilityState==='hidden')writePresence(activityUser,0).catch(()=>{})});
+window.addEventListener('pagehide',()=>{if(activityUser)writePresence(activityUser,0).catch(()=>{})});
 async function loadAdmin(){if(!isAdmin(adminUser)){ $a('adminStatus').textContent='हा विभाग फक्त अधिकृत Admin साठी आहे.';return;}$a('adminStatus').textContent='डेटा लोड होत आहे…';try{
  const [visits,users,chats,logins]=await Promise.all([
   adminGetDocs(adminQuery(adminCollection(adminDb,'siteVisits'),adminOrderBy('createdAt','desc'),adminLimit(1000))),
@@ -354,13 +373,14 @@ async function loadAdmin(){if(!isAdmin(adminUser)){ $a('adminStatus').textConten
   adminGetDocs(adminQuery(adminCollection(adminDb,'publicMessages'),adminOrderBy('createdAt','desc'),adminLimit(500))),
   adminGetDocs(adminQuery(adminCollection(adminDb,'loginHistory'),adminOrderBy('createdAt','desc'),adminLimit(20)))
  ]);
- const now=Date.now(), active=users.docs.filter(d=>{const t=d.data().lastSeen?.toDate?.()?.getTime?.()||0;return now-t<15*60*1000}).length;
- $a('admViews').textContent=visits.size;$a('admUsers').textContent=users.size;$a('admChats').textContent=chats.size;$a('admActive').textContent=active;
+ const now=Date.now(), active=users.docs.filter(d=>{const t=d.data().lastSeen?.toDate?.()?.getTime?.()||0;return now-t<2*60*1000}).length, todayKey=indiaKeys().day, monthKey=indiaKeys().month;
+ const todaySeconds=users.docs.reduce((n,d)=>n+(d.data().activityDay===todayKey?(Number(d.data().todaySeconds)||0):0),0), monthSeconds=users.docs.reduce((n,d)=>n+(d.data().activityMonth===monthKey?(Number(d.data().monthSeconds)||0):0),0);
+ $a('admViews').textContent=visits.size;$a('admUsers').textContent=users.size;$a('admChats').textContent=chats.size;$a('admActive').textContent=active;$a('admTodayTime').textContent=durationLabel(todaySeconds);$a('admMonthTime').textContent=durationLabel(monthSeconds);
  const pages={};visits.docs.forEach(d=>{const p=d.data().path||'/';pages[p]=(pages[p]||0)+1});const top=Object.entries(pages).sort((a,b)=>b[1]-a[1]).slice(0,8);
  $a('admPages').innerHTML=top.length?top.map(([p,n])=>'<div class="flex justify-between gap-3 border-b border-slate-100 dark:border-slate-800 py-2"><span>'+escA(p)+'</span><b>'+n+'</b></div>').join(''):'अजून page views नाहीत.';
  $a('admLogins').innerHTML=logins.size?logins.docs.map(d=>{const x=d.data();return '<div class="border-b border-slate-100 dark:border-slate-800 py-2"><b>'+escA(x.email||x.name||'विद्यार्थी')+'</b><div class="text-xs text-slate-500">'+escA(x.createdAt?.toDate?.()?.toLocaleString('mr-IN')||'वेळ उपलब्ध नाही')+'</div></div>'}).join(''):'Login history उपलब्ध नाही.';
- $a('admStudentList').innerHTML=users.size?users.docs.slice(0,15).map(d=>{const x=d.data();return '<div class="flex justify-between gap-3 border-b border-slate-100 dark:border-slate-800 py-2"><span>'+escA(x.name||'विद्यार्थी')+'</span><span class="text-xs text-slate-500">'+escA(x.lastSeen?.toDate?.()?.toLocaleString('mr-IN')||'')+'</span></div>'}).join(''):'विद्यार्थी डेटा उपलब्ध नाही.';
- $a('adminStatus').textContent='अद्ययावत: '+new Date().toLocaleString('mr-IN')+' • Page Views म्हणजे page loads; unique visitors नाहीत.';
+ $a('admStudentList').innerHTML=users.size?users.docs.slice(0,30).map(d=>{const x=d.data(),seen=x.lastSeen?.toDate?.()?.getTime?.()||0,isOnline=now-seen<2*60*1000,day=x.activityDay===todayKey?(Number(x.todaySeconds)||0):0,month=x.activityMonth===monthKey?(Number(x.monthSeconds)||0):0;return '<div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 py-3"><div><div class="font-semibold">'+escA(x.name||'विद्यार्थी')+' <span class="ml-1 text-xs '+(isOnline?'text-emerald-600':'text-slate-400')+'">● '+(isOnline?'Online':'Offline')+'</span></div><div class="text-xs text-slate-500">शेवटचे सक्रिय: '+escA(x.lastSeen?.toDate?.()?.toLocaleString('mr-IN')||'माहिती नाही')+'</div></div><div class="text-right text-xs text-slate-500"><div>आज: <b class="text-slate-700 dark:text-slate-200">'+durationLabel(day)+'</b></div><div>महिना: <b class="text-slate-700 dark:text-slate-200">'+durationLabel(month)+'</b></div></div></div>'}).join(''):'विद्यार्थी डेटा उपलब्ध नाही.';
+ $a('adminStatus').textContent='अद्ययावत: '+new Date().toLocaleString('mr-IN')+' • Online = मागील 2 मिनिटांत heartbeat. वापर वेळ active tab उघडा असताना अंदाजे मोजली जाते; जुन्या वापराची नोंद उपलब्ध नाही.';
  }catch(e){console.error(e);$a('adminStatus').textContent='डेटा मिळाला नाही. Firebase Firestore Rules अपडेट/Publish करणे आवश्यक आहे: '+(e.code||e.message)}}
 $a('adminRefreshBtn').addEventListener('click',loadAdmin);
 const oldSwitch=window.switchTab;window.switchTab=function(id){if(id==='admin'&&!isAdmin(adminUser)){alert('Admin access आवश्यक आहे.');return}oldSwitch(id);if(id==='admin')loadAdmin()};
