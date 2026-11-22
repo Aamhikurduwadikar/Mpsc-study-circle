@@ -5,6 +5,22 @@ service cloud.firestore {
     function isAdmin() { return signedIn() && request.auth.token.email == 'pramodraj9734@gmail.com'; }
     function owns(uid) { return signedIn() && request.auth.uid == uid; }
     function canUseChat() { return signedIn() && !exists(/databases/$(database)/documents/blockedUsers/$(request.auth.uid)); }
+    function validChatMessage() {
+      return request.resource.data.uid == request.auth.uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 40
+        && request.resource.data.text is string
+        && request.resource.data.text.size() <= 1500
+        && (
+          request.resource.data.text.size() > 0
+          || (
+            request.resource.data.fileUrl is string
+            && request.resource.data.fileName is string
+            && request.resource.data.fileName.size() > 0
+          )
+        );
+    }
 
     match /siteVisits/{visitId} {
       allow create: if true;
@@ -50,21 +66,21 @@ service cloud.firestore {
     }
     match /chatUsers/{uid} {
       allow read: if signedIn();
-      allow create, update: if owns(uid) && canUseChat()
+      allow create: if owns(uid) && canUseChat()
         && request.resource.data.uid == uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 40;
+      allow update: if owns(uid) && canUseChat()
+        && request.resource.data.uid == resource.data.uid
         && request.resource.data.name is string
         && request.resource.data.name.size() <= 40;
       allow delete: if owns(uid) || isAdmin();
     }
     match /publicMessages/{messageId} {
       allow read: if true;
-      allow create: if canUseChat()
-        && request.resource.data.uid == request.auth.uid
-        && request.resource.data.name is string
-        && request.resource.data.text is string
-        && request.resource.data.text.size() > 0
-        && request.resource.data.text.size() <= 1500;
-      allow update: if signedIn() && resource.data.uid == request.auth.uid;
+      allow create: if canUseChat() && validChatMessage();
+      allow update: if signedIn() && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == resource.data.uid;
       allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
     }
     match /privateRooms/{roomId} {
@@ -77,12 +93,7 @@ service cloud.firestore {
         && request.resource.data.participants == resource.data.participants;
       match /messages/{messageId} {
         allow read: if isParticipant(roomId);
-        allow create: if isParticipant(roomId)
-          && request.resource.data.uid == request.auth.uid
-          && request.resource.data.name is string
-          && request.resource.data.text is string
-          && request.resource.data.text.size() > 0
-          && request.resource.data.text.size() <= 1500;
+        allow create: if isParticipant(roomId) && validChatMessage();
         allow update, delete: if isParticipant(roomId) && resource.data.uid == request.auth.uid;
       }
     }
